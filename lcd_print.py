@@ -1,4 +1,5 @@
 import time
+import textwrap
 import threading
 from rpi_lcd import LCD
 
@@ -12,21 +13,30 @@ queue_index = 0
 is_paused = False
 
 class Display:
-	def __init__(self, first_line, second_line: str = "", print_time: float = 2, clear_after: bool = False) -> None:
-		self.first_line = first_line
-		self.second_line = second_line
+	def __init__(self, text: str, print_time: float = 5, clear_after: bool = True) -> None:
+		self.text = text
 		self.print_time = print_time
 		self.clear_after = clear_after
+	
+	def print(self):
+		text = self.text
+		if type(self.text) != str:
+			text = self.text()
+		lines = textwrap.wrap(text, 16, break_long_words=False)
+		
+		for i in range(0, len(lines)-1):
+			lcd.text(lines[i], 1)
+			lcd.text(lines[i+1], 2)
+			time.sleep(self.print_time / (len(lines)-1))
+	
+	def clear(self):
+		lcd.clear()
 	
 
 def print_next():
 	global queue_index
 	next_display = queue[queue_index % len(queue)]
-	print_to_lcd(next_display)
-	
-	time.sleep(next_display.print_time)
-	if(next_display.clear_after):
-		lcd.clear()
+	next_display.print_displays()
 
 	queue_index = queue_index + 1
 	while(is_paused):
@@ -35,18 +45,6 @@ def print_next():
 
 	if queue_index +1 == len(queue):
 		queue_index = 0
-
-
-def print_to_lcd(display: Display):
-	if type(display.first_line) == str:
-		lcd.text(display.first_line, 1)
-	else:
-		lcd.text(display.first_line(), 1)
-
-	if type(display.second_line) == str:
-		lcd.text(display.second_line, 1)
-	else:
-		lcd.text(display.second_line(), 2)
 		
 
 def add_to_print_queue(display: Display):

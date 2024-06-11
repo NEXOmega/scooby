@@ -1,14 +1,25 @@
-import lcd_print
+from lcd_print import Display, add_to_print_queue
 import datetime
-import subprocess
+import python_weather
+import asyncio
 
-song = subprocess.run(['mpc', '-h','192.168.1.13','-p', '6601', 'current'], stdout=subprocess.PIPE)
+from utils import module
 
-#lcd_print.print("Playing", song.stdout.decode('utf-8'))
-
-time = datetime.datetime.now()
-
-test_display = lcd_print.Display(lambda : datetime.datetime.now().strftime("%m/%d/%Y"), lambda : datetime.datetime.now().strftime("%H:%M:%S"), clear_after=False)
 def on_load():
-    global index
-    lcd_print.add_to_print_queue(test_display)
+    add_to_print_queue(DisplayTime("Time Display"))
+
+async def getweather():
+  # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
+  async with python_weather.Client(unit=python_weather.IMPERIAL) as client:
+    # fetch a weather forecast from a city
+    weather = await client.get('Marseille')
+    return weather
+    
+class DisplayTime(module.Module):
+    def setup_display(self):
+        weather = asyncio.run(getweather())
+        time_display = Display(
+           lambda : "{} {}deg {}".format(datetime.datetime.now().strftime("%m/%d/%Y"), weather.temperature, datetime.datetime.now().strftime("%H:%M:%S"))
+        )
+        self.displays_queue.append(time_display)
+        

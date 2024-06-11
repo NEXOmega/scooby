@@ -7,7 +7,7 @@ modules_folder = os.path.join(os.path.dirname(__file__), 'modules')
 # Iterate over the files in the modules folder
 for file_name in os.listdir(modules_folder):
     # Check if the file is a Python module
-    if file_name.endswith('.py'):
+    if file_name.endswith('.py') and not file_name.startswith("!"):
         # Remove the file extension to get the module name
         module_name = file_name[:-3]
         
